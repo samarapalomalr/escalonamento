@@ -5,3 +5,5 @@ tflite-runtime
 pillow
 numpy<2.0.0
 sqlalchemy
+python-jose[cryptography]
+passlib[bcrypt]
