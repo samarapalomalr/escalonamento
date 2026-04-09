@@ -8,12 +8,9 @@ from sqlalchemy.orm import Session
 from datetime import datetime
 from typing import List
 
-# Imports simplificados para a estrutura backend/app/
-import models
-import schemas
-import database
-import auth
-from services import ai_service
+# --- NOVOS IMPORTS (Ajustados para a nova estrutura) ---
+from app import models, schemas, database, auth
+from app.services import ai_service
 
 # Inicializa o banco de dados
 models.Base.metadata.create_all(bind=database.engine)
