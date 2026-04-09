@@ -17,7 +17,7 @@
                 class="w-full p-4 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-red-800 transition">
 
             <button onclick="registrar()" id="btn-registrar" 
-                class="w-full bg-[#811803] text-white font-bold p-4 rounded-xl shadow-lg hover:bg-red-900 transition">
+                class="w-full bg-[#811803] text-white font-bold p-4 rounded-xl shadow-lg hover:bg-red-900 transition disabled:bg-gray-400">
                 CADASTRAR
             </button>
 
@@ -26,13 +26,23 @@
     </div>
 
     <script>
+        // URL do seu Backend no Render
+        const API_BASE_URL = "https://escalonamento.onrender.com";
+
         async function registrar() {
             const user = document.getElementById('novo-usuario').value;
             const pass = document.getElementById('nova-senha').value;
+            const btn = document.getElementById('btn-registrar');
+
             if(!user || !pass) return alert("Preencha os campos!");
 
+            // Feedback visual de carregamento
+            btn.innerText = "CADASTRANDO...";
+            btn.disabled = true;
+
             try {
-                const response = await fetch('http://127.0.0.1:8000/register', {
+                // Alterado de localhost para a URL do Render
+                const response = await fetch(`${API_BASE_URL}/register`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ username: user, password: pass })
@@ -40,13 +50,18 @@
 
                 if(response.ok) {
                     alert("Usuário criado com sucesso!");
-                    location.href = 'index.html';
+                    // Garanta que o index.html seja a sua tela de login
+                    location.href = 'index.html'; 
                 } else {
                     const error = await response.json();
                     alert(error.detail || "Erro ao cadastrar");
                 }
             } catch (err) {
-                alert("Erro ao conectar com o servidor.");
+                console.error(err);
+                alert("Erro ao conectar com o servidor. O backend pode estar iniciando, tente novamente em alguns segundos.");
+            } finally {
+                btn.innerText = "CADASTRAR";
+                btn.disabled = false;
             }
         }
     </script>
