@@ -12,12 +12,13 @@ from typing import List
 from app import models, schemas, database, auth
 from app.services import ai_service
 
-# Inicializa o banco de dados (Cria o arquivo patrimonio.db se não existir)
+# Inicializa o banco de dados
+print("Iniciando banco de dados...")
 models.Base.metadata.create_all(bind=database.engine)
 
 app = FastAPI(title="Patrimônio IA API")
 
-# Configuração de CORS para permitir acesso da Vercel
+# CONFIGURAÇÃO DE CORS - CRITICAL PARA VERCEL
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"], 
@@ -26,15 +27,20 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# AJUSTE NO BASE_DIR: Como main.py está em backend/, o BASE_DIR é o próprio diretório do arquivo
+# AJUSTE NO BASE_DIR
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 assets_path = os.path.join(BASE_DIR, "assets")
 
-# Monta a pasta de assets para servir imagens estáticas, se necessário
 if os.path.exists(assets_path):
     app.mount("/assets", StaticFiles(directory=assets_path), name="assets")
+else:
+    print(f"Aviso: Pasta assets não encontrada em {assets_path}")
 
 # --- ROTAS ---
+
+@app.get("/")
+def read_root():
+    return {"status": "online", "message": "Patrimônio IA API rodando com sucesso"}
 
 @app.post("/register", response_model=schemas.UserResponse)
 def register(user: schemas.UserCreate, db: Session = Depends(database.get_db)):
@@ -79,8 +85,6 @@ async def classify_and_save(
 ):
     try:
         image_bytes = await file.read()
-        
-        # Chama o serviço de IA para predição
         label, confidence = ai_service.predict_image(image_bytes, categoria)
 
         nova_deteccao = models.Deteccao(
@@ -98,7 +102,6 @@ async def classify_and_save(
         db.refresh(nova_deteccao)
         return nova_deteccao
     except Exception as e:
-        # Importante: O print ajuda a debugar nos logs do Render
         print(f"ERRO NA CLASSIFICAÇÃO: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
 
@@ -106,6 +109,10 @@ async def classify_and_save(
 def get_history(user_id: int, db: Session = Depends(database.get_db)):
     return db.query(models.Deteccao).filter(models.Deteccao.user_id == user_id).order_by(models.Deteccao.data.desc()).all()
 
+# EXECUÇÃO DO SERVIDOR
 if __name__ == "__main__":
-    port = int(os.environ.get("PORT", 8000))
+    # O Render exige que a porta seja lida da variável de ambiente PORT
+    # e que o host seja 0.0.0.0
+    port = int(os.environ.get("PORT", 10000))
+    print(f"Servidor subindo na porta {port}...")
     uvicorn.run(app, host="0.0.0.0", port=port)
