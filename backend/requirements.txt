@@ -4,3 +4,4 @@ python-multipart
 tflite-runtime
 pillow
 numpy<2.0.0
+sqlalchemy

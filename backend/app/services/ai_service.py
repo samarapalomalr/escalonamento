@@ -11,7 +11,7 @@ except ImportError:
     except ImportError:
         raise ImportError("Nenhum interpretador TFLite encontrado.")
 
-# AJUSTE DE CAMINHO: Sobe 3 níveis (services -> app -> backend) para achar 'assets'
+# Pega o caminho de backend/ (onde a pasta assets está)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 MODEL_CONFIGS = {
