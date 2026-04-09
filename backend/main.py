@@ -1,5 +1,10 @@
 import os
+import sys  
 import uvicorn
+
+# Adiciona o diretório atual ao PATH antes de importar a pasta 'app'
+sys.path.append(os.path.dirname(os.path.abspath(__file__)))
+
 from fastapi import FastAPI, UploadFile, File, Form, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordRequestForm
 from fastapi.middleware.cors import CORSMiddleware
@@ -8,7 +13,7 @@ from sqlalchemy.orm import Session
 from datetime import datetime
 from typing import List
 
-# --- IMPORTS DA ESTRUTURA backend/app/ ---
+# --- AGORA OS IMPORTS DA ESTRUTURA backend/app/ ---
 from app import models, schemas, database, auth
 from app.services import ai_service
 
