@@ -1,13 +1,22 @@
-import tensorflow.lite as tflite
 import numpy as np
 from PIL import Image
 import io
 import os
 
+# Tenta importar o tflite-runtime primeiro (ideal para o Render/Deploy)
+# Caso não encontre, tenta o tensorflow completo (local)
+try:
+    import tflite_runtime.interpreter as tflite
+except ImportError:
+    try:
+        import tensorflow.lite as tflite
+    except ImportError:
+        raise ImportError("Nenhum interpretador TFLite encontrado. Instale tflite-runtime ou tensorflow.")
+
 # Obtém o caminho base do diretório atual
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-# Mapeamento de configurações corrigido com caminhos dinâmicos
+# Mapeamento de configurações com caminhos dinâmicos
 MODEL_CONFIGS = {
     'Elementos Arquitetônicos': {
         'path': os.path.join(BASE_DIR, 'assets', 'models', 'arquitetura_5elementos.tflite'),
@@ -48,9 +57,7 @@ def predict_image(image_bytes: bytes, category: str):
     # Converter para array NumPy
     img_array = np.array(img)
 
-    # O erro "Got FLOAT32 but expected INT8" acontece aqui.
-    # Modelos quantizados do Edge Impulse esperam que você subtraia o zero_point (128)
-    # para que os valores fiquem entre -128 e 127.
+    # Normalização INT8 para Edge Impulse: converte 0...255 para -128...127
     input_data = (img_array - 128).astype(np.int8)
     
     # Adiciona dimensão de batch (1, 96, 96, 3)
@@ -61,11 +68,8 @@ def predict_image(image_bytes: bytes, category: str):
     interpreter.invoke()
     
     # --- PÓS-PROCESSAMENTO (DEQUANTIZAÇÃO) ---
-    # O output_data virá em INT8 (ex: -128 a 127). Precisamos converter de volta para 0.0 a 1.0
+    # O output_raw vem em INT8. Dequantizamos usando zero_point -128 e scale 0.00390625
     output_raw = interpreter.get_tensor(output_details[0]['index'])[0]
-    
-    # Fórmula de dequantização baseada no seu arquivo do Edge Impulse:
-    # zero_point = -128, scale = 0.00390625
     output_data = (output_raw.astype(np.float32) - (-128)) * 0.00390625
     
     best_index = np.argmax(output_data)
