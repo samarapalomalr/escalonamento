@@ -8,15 +8,16 @@ from sqlalchemy.orm import Session
 from datetime import datetime
 from typing import List
 
-# --- NOVOS IMPORTS (Ajustados para a nova estrutura) ---
+# --- IMPORTS DA ESTRUTURA backend/app/ ---
 from app import models, schemas, database, auth
 from app.services import ai_service
 
-# Inicializa o banco de dados
+# Inicializa o banco de dados (Cria o arquivo patrimonio.db se não existir)
 models.Base.metadata.create_all(bind=database.engine)
 
 app = FastAPI(title="Patrimônio IA API")
 
+# Configuração de CORS para permitir acesso da Vercel
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"], 
@@ -25,11 +26,15 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Caminho para assets (sobe um nível de 'app' para 'backend')
-BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+# AJUSTE NO BASE_DIR: Como main.py está em backend/, o BASE_DIR é o próprio diretório do arquivo
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 assets_path = os.path.join(BASE_DIR, "assets")
+
+# Monta a pasta de assets para servir imagens estáticas, se necessário
 if os.path.exists(assets_path):
     app.mount("/assets", StaticFiles(directory=assets_path), name="assets")
+
+# --- ROTAS ---
 
 @app.post("/register", response_model=schemas.UserResponse)
 def register(user: schemas.UserCreate, db: Session = Depends(database.get_db)):
@@ -52,6 +57,7 @@ def login(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depend
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Usuário ou senha incorretos",
+            headers={"WWW-Authenticate": "Bearer"},
         )
     
     access_token = auth.create_access_token(data={"sub": user.username})
@@ -73,6 +79,8 @@ async def classify_and_save(
 ):
     try:
         image_bytes = await file.read()
+        
+        # Chama o serviço de IA para predição
         label, confidence = ai_service.predict_image(image_bytes, categoria)
 
         nova_deteccao = models.Deteccao(
@@ -90,8 +98,14 @@ async def classify_and_save(
         db.refresh(nova_deteccao)
         return nova_deteccao
     except Exception as e:
+        # Importante: O print ajuda a debugar nos logs do Render
+        print(f"ERRO NA CLASSIFICAÇÃO: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
 
 @app.get("/history/{user_id}", response_model=List[schemas.DeteccaoResponse])
 def get_history(user_id: int, db: Session = Depends(database.get_db)):
     return db.query(models.Deteccao).filter(models.Deteccao.user_id == user_id).order_by(models.Deteccao.data.desc()).all()
+
+if __name__ == "__main__":
+    port = int(os.environ.get("PORT", 8000))
+    uvicorn.run(app, host="0.0.0.0", port=port)
