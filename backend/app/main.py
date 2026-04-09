@@ -3,15 +3,16 @@ import uvicorn
 from fastapi import FastAPI, UploadFile, File, Form, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordRequestForm
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.staticfiles import StaticFiles  # <-- Adicionado
+from fastapi.staticfiles import StaticFiles
 from sqlalchemy.orm import Session
 from datetime import datetime
 from typing import List
 
+# Importação robusta para local e deploy
 try:
     from . import models, schemas, database, auth
     from .services import ai_service
-except ImportError:
+except (ImportError, ValueError):
     import models, schemas, database, auth
     from services import ai_service
 
@@ -20,6 +21,7 @@ models.Base.metadata.create_all(bind=database.engine)
 
 app = FastAPI(title="Patrimônio IA API")
 
+# Configuração de CORS para permitir acesso da Vercel
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"], 
@@ -28,9 +30,12 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Mapeia a pasta assets para ser acessível via URL /assets
-# Certifique-se que o caminho "assets" está correto em relação ao main.py
-app.mount("/assets", StaticFiles(directory="assets"), name="assets")
+# Servir arquivos estáticos (fotos de exemplo)
+# O path.abspath garante que ele ache a pasta independente de onde o servidor rode
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+assets_path = os.path.join(BASE_DIR, "assets")
+if os.path.exists(assets_path):
+    app.mount("/assets", StaticFiles(directory=assets_path), name="assets")
 
 # --- ROTAS ---
 
@@ -96,7 +101,7 @@ async def classify_and_save(
         return nova_deteccao
 
     except Exception as e:
-        print(f"Erro na classificação: {e}") # Importante para debugar no terminal
+        print(f"Erro na classificação: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 @app.get("/history/{user_id}", response_model=List[schemas.DeteccaoResponse])
@@ -105,4 +110,5 @@ def get_history(user_id: int, db: Session = Depends(database.get_db)):
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 8000))
-    uvicorn.run("app.main:app", host="0.0.0.0", port=port, reload=True)
+    # Para rodar local: uvicorn main:app --reload
+    uvicorn.run(app, host="0.0.0.0", port=port)

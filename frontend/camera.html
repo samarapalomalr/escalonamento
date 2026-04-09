@@ -33,6 +33,9 @@
     <script>
         const video = document.getElementById('video');
         const categoria = localStorage.getItem('categoria_atual') || "Elementos Arquitetônicos";
+        // URL do Render (MUDAR PARA A SUA URL REAL)
+        const API_BASE_URL = "https://escalonamento.onrender.com"; 
+
         document.getElementById('categoria-label').innerText = categoria;
 
         async function initCamera() {
@@ -52,7 +55,6 @@
             const canvas = document.getElementById('canvas');
             const context = canvas.getContext('2d');
             
-            // Garantir que o userId seja enviado como número para o FastAPI
             const rawUserId = localStorage.getItem('user_id');
             if (!rawUserId) {
                 alert("Sessão expirada. Por favor, faça login novamente.");
@@ -63,8 +65,6 @@
 
             btnText.innerText = "PROCESSANDO...";
             
-            // Redimensionar para 300x300 no frontend já ajuda muito na performance
-            // sem perder a qualidade necessária para a IA (que usa 96x96)
             canvas.width = 300;
             canvas.height = 300;
             context.drawImage(video, 0, 0, 300, 300);
@@ -82,39 +82,31 @@
                             formData.append('longitude', pos.coords.longitude);
                             enviarParaBackend(formData);
                         },
-                        () => {
-                            console.warn("GPS indisponível.");
-                            enviarParaBackend(formData);
-                        },
+                        () => { enviarParaBackend(formData); },
                         { timeout: 4000 }
                     );
                 } else {
                     enviarParaBackend(formData);
                 }
-            }, 'image/jpeg', 0.8); // 0.8 de qualidade economiza banda
+            }, 'image/jpeg', 0.8);
         }
 
         async function enviarParaBackend(formData) {
             const btnText = document.getElementById('btn-text');
             try {
-                const response = await fetch('http://127.0.0.1:8000/classify', {
+                const response = await fetch(`${API_BASE_URL}/classify`, {
                     method: 'POST',
                     body: formData
                 });
                 
                 if (!response.ok) {
                     const erroData = await response.json();
-                    // Captura erros de validação (como o 422) e mostra o campo culpado
-                    const msg = erroData.detail && typeof erroData.detail === 'object' 
-                        ? JSON.stringify(erroData.detail) 
-                        : erroData.detail;
-                    throw new Error(msg || "Erro no servidor");
+                    throw new Error(erroData.detail || "Erro no servidor");
                 }
 
                 const result = await response.json();
                 exibirResultados(result);
             } catch (err) {
-                console.error(err);
                 alert("Erro: " + err.message);
             } finally {
                 btnText.innerText = "CLASSIFICAR";
