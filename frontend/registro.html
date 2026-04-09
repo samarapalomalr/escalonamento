@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cadastro - IA Patrimônio</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-50 min-h-screen flex items-center justify-center p-6">
+    <div class="w-full max-w-sm text-center">
+        <h1 class="text-3xl font-bold text-gray-800 mb-8">Criar Conta</h1>
+        <div class="space-y-4 bg-white p-8 rounded-3xl shadow-xl border border-gray-100">
+            <input type="text" id="novo-usuario" placeholder="Escolha um usuário" 
+                class="w-full p-4 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-red-800 transition">
+            
+            <input type="password" id="nova-senha" placeholder="Escolha uma senha" 
+                class="w-full p-4 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-red-800 transition">
+
+            <button onclick="registrar()" id="btn-registrar" 
+                class="w-full bg-[#811803] text-white font-bold p-4 rounded-xl shadow-lg hover:bg-red-900 transition">
+                CADASTRAR
+            </button>
+
+            <button onclick="history.back()" class="text-sm text-gray-500 hover:underline">Voltar para o login</button>
+        </div>
+    </div>
+
+    <script>
+        async function registrar() {
+            const user = document.getElementById('novo-usuario').value;
+            const pass = document.getElementById('nova-senha').value;
+            if(!user || !pass) return alert("Preencha os campos!");
+
+            try {
+                const response = await fetch('http://127.0.0.1:8000/register', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username: user, password: pass })
+                });
+
+                if(response.ok) {
+                    alert("Usuário criado com sucesso!");
+                    location.href = 'index.html';
+                } else {
+                    const error = await response.json();
+                    alert(error.detail || "Erro ao cadastrar");
+                }
+            } catch (err) {
+                alert("Erro ao conectar com o servidor.");
+            }
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dúvidas - Classificações</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
+    <style>
+        .vinho-text { color: #811803; }
+        .vinho-bg { background-color: #811803; }
+        .card-shadow { box-shadow: 0 4px 10px rgba(0,0,0,0.06); }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+    </style>
+</head>
+<body class="bg-gray-50 min-h-screen">
+    <header class="vinho-bg p-4 text-white flex items-center shadow-md sticky top-0 z-50">
+        <button onclick="window.location.href='home.html'" class="mr-4 flex items-center justify-center active:scale-90 transition">
+            <i class="material-icons">arrow_back</i>
+        </button>
+        <h1 class="font-bold text-xl uppercase tracking-wider">Classificações</h1>
+    </header>
+
+    <main id="container-duvidas" class="p-5 space-y-6">
+        </main>
+
+    <script>
+        const API_URL = "http://127.0.0.1:8000";
+        const DATA = [
+            {
+                nome: "Elementos Arquitetônicos",
+                descricao: "Componentes que formam e caracterizam a estrutura e o estilo de um edifício.",
+                imagens: ["igreja.png", "janela.png", "frontao.png", "porta.png", "torre.png"],
+                labels: ["Igreja", "Janela", "Frontão", "Porta", "Torre"]
+            },
+            {
+                nome: "Rachaduras",
+                descricao: "Fissuras ou fraturas na superfície de materiais de construção.",
+                imagens: ["rachadura1.png", "rachadura2.png"],
+                labels: ["Rachadura 1", "Rachadura 2"]
+            },
+            {
+                nome: "Casa Corrente",
+                descricao: "Residência típica de padrão popular com arquitetura simples.",
+                imagens: ["meia_morada.png", "sobrado.png", "porta_janela.png"],
+                labels: ["Meia Morada", "Sobrado", "Porta e Janela"]
+            },
+            {
+                nome: "Janelas Históricas",
+                descricao: "Classificação de tipologias de janelas presentes em edificações históricas brasileiras.",
+                imagens: ["sacada.png", "almofada.png", "calha.png", "guilhotina.png"],
+                labels: ["Porta Sacada", "Janela Almofada", "Janela Calha", "Janela Guilhotina"]
+            }
+        ];
+
+        function renderCards() {
+            const container = document.getElementById('container-duvidas');
+            
+            DATA.forEach(item => {
+                let imagesHTML = item.imagens.map((img, i) => `
+                    <div class="flex-shrink-0 w-32 text-center">
+                        <img src="${API_URL}/assets/images/${img}" 
+                             onerror="this.src='https://via.placeholder.com/150?text=Erro'"
+                             class="w-32 h-24 object-cover rounded-2xl mb-2 shadow-sm border border-gray-100" 
+                             alt="${item.labels[i]}">
+                        <span class="text-[11px] text-gray-500 font-bold uppercase tracking-tighter">${item.labels[i]}</span>
+                    </div>
+                `).join('');
+
+                container.innerHTML += `
+                    <div class="bg-white rounded-3xl p-5 card-shadow border border-gray-100">
+                        <div class="flex items-center gap-4 mb-3">
+                            <div class="p-3 bg-red-50 rounded-xl">
+                                <svg class="w-6 h-6 text-[#811803]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7"></path>
+                                </svg>
+                            </div>
+                            <h2 class="font-bold text-[#811803]">${item.nome}</h2>
+                        </div>
+                        <p class="text-gray-600 text-sm mb-4 leading-relaxed">${item.descricao}</p>
+                        <div class="flex overflow-x-auto gap-4 no-scrollbar pb-2">
+                            ${imagesHTML}
+                        </div>
+                    </div>
+                `;
+            });
+        }
+        renderCards();
+    </script>
+</body>
+</html>

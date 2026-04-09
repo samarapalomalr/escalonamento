@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Configurações - IA Patrimônio</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
+    <style>
+        .vinho-bg { background-color: #811803; }
+        .vinho-text { color: #811803; }
+        .card-shadow { box-shadow: 0 4px 10px rgba(0,0,0,0.06); }
+    </style>
+</head>
+<body class="bg-gray-50 min-h-screen">
+    <header class="vinho-bg text-white p-4 flex items-center shadow-md sticky top-0 z-50">
+        <button onclick="history.back()" class="mr-4 active:scale-90 transition">
+            <i class="material-icons">arrow_back</i>
+        </button>
+        <h1 class="text-xl font-bold uppercase tracking-wider">Configurações</h1>
+    </header>
+
+    <main class="p-5 max-w-md mx-auto space-y-6">
+        <section>
+            <h2 class="text-xs font-bold text-gray-400 uppercase tracking-widest mb-3 ml-1">Sobre o Projeto</h2>
+            <div class="bg-white p-6 rounded-3xl card-shadow border border-gray-100 text-justify text-sm leading-relaxed">
+                <p class="font-bold vinho-text mb-3 text-base">IAPatrimônio</p>
+                Este aplicativo foi desenvolvido no contexto de um projeto de Iniciação Científica da <strong>UFOP</strong>, com apoio do <strong>PIBITI/CNPq (2025–2026)</strong>. O foco é a classificação automática de elementos arquitetônicos históricos.
+                <br><br>
+                <strong>Autores:</strong><br>
+                <span class="text-gray-600">Samara Paloma Lopes Augusto Ribeiro</span><br>
+                <span class="text-gray-600">André Luiz Carvalho Ottoni</span>
+            </div>
+        </section>
+
+        <section>
+            <h2 class="text-xs font-bold text-gray-400 uppercase tracking-widest mb-3 ml-1">Informações Legais</h2>
+            <div class="space-y-3">
+                <button onclick="abrirPopup('termos')" class="w-full bg-white p-4 flex justify-between items-center rounded-2xl card-shadow border border-gray-50 active:bg-gray-50 transition">
+                    <div class="flex items-center"><i class="material-icons mr-3 text-gray-400">description</i> <span class="text-gray-700 font-medium">Termos de Uso</span></div>
+                    <i class="material-icons text-gray-300">chevron_right</i>
+                </button>
+                <button onclick="abrirPopup('privacidade')" class="w-full bg-white p-4 flex justify-between items-center rounded-2xl card-shadow border border-gray-50 active:bg-gray-50 transition">
+                    <div class="flex items-center"><i class="material-icons mr-3 text-gray-400">privacy_tip</i> <span class="text-gray-700 font-medium">Política de Privacidade</span></div>
+                    <i class="material-icons text-gray-300">chevron_right</i>
+                </button>
+            </div>
+        </section>
+
+        <section>
+            <h2 class="text-xs font-bold text-gray-400 uppercase tracking-widest mb-3 ml-1">Ajuda</h2>
+            <button onclick="abrirPopup('suporte')" class="w-full bg-white p-4 flex justify-between items-center rounded-2xl card-shadow border border-gray-50 active:bg-gray-50 transition">
+                <div class="flex items-center"><i class="material-icons mr-3 text-gray-400">support_agent</i> <span class="text-gray-700 font-medium">Suporte Acadêmico</span></div>
+                <i class="material-icons text-gray-300">chevron_right</i>
+            </button>
+        </section>
+
+        <button onclick="location.href='login.html'" class="w-full py-4 text-red-600 font-bold text-sm uppercase tracking-widest">
+            Sair da Conta
+        </button>
+    </main>
+
+    <div id="popup" class="hidden fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-6 z-[60]">
+        <div class="bg-white rounded-[2rem] w-full max-w-sm p-8 shadow-2xl">
+            <h3 id="popup-titulo" class="text-xl font-bold mb-4 vinho-text border-b border-gray-100 pb-3"></h3>
+            <div id="popup-texto" class="text-sm text-gray-600 text-justify whitespace-pre-line leading-relaxed overflow-y-auto max-h-[50vh] pr-2"></div>
+            <button onclick="fecharPopup()" class="w-full mt-8 vinho-bg text-white p-4 rounded-2xl font-bold shadow-lg active:scale-95 transition">
+                ENTENDI
+            </button>
+        </div>
+    </div>
+
+    <script>
+        const conteudos = {
+            termos: { 
+                titulo: "Termos de Uso", 
+                texto: "1. Finalidade: Este software destina-se exclusivamente a fins acadêmicos e de pesquisa.\n\n2. Dados: As classificações realizadas são armazenadas para fins de melhoria do modelo de IA.\n\n3. Responsabilidade: A UFOP não se responsabiliza por interpretações equivocadas geradas pelo modelo automático." 
+            },
+            privacidade: { 
+                titulo: "Privacidade", 
+                texto: "Sua privacidade é respeitada. Armazenamos apenas seu histórico de detecções e localização para mapeamento do patrimônio histórico. Seus dados não são compartilhados com terceiros." 
+            },
+            suporte: { 
+                titulo: "Suporte Acadêmico", 
+                texto: "Para dúvidas sobre o projeto ou erros técnicos:\n\nEmail: samarapaloma57@gmail.com\nDepartamento de Computação (DECOM)\nUniversidade Federal de Ouro Preto" 
+            }
+        };
+
+        function abrirPopup(id) {
+            document.getElementById('popup-titulo').innerText = conteudos[id].titulo;
+            document.getElementById('popup-texto').innerText = conteudos[id].texto;
+            document.getElementById('popup').classList.remove('hidden');
+        }
+        function fecharPopup() { document.getElementById('popup').classList.add('hidden'); }
+    </script>
+</body>
+</html>

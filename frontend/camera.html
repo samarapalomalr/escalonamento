@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Classificador - IA Patrimônio</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
+</head>
+<body class="bg-black min-h-screen flex flex-col">
+    <header class="bg-[#811803] text-white p-4 flex items-center justify-between">
+        <button onclick="history.back()"><i class="material-icons">arrow_back</i></button>
+        <span id="categoria-label" class="font-bold uppercase tracking-wider">Carregando...</span>
+        <div class="w-6"></div>
+    </header>
+
+    <div class="relative flex-1 overflow-hidden flex items-center justify-center">
+        <video id="video" autoplay playsinline class="absolute min-w-full min-h-full object-cover"></video>
+        <canvas id="canvas" class="hidden"></canvas>
+
+        <div id="result-overlay" class="hidden absolute bottom-24 left-6 right-6 bg-black bg-opacity-95 text-white p-6 rounded-3xl border border-white/20 shadow-2xl z-50">
+            <div id="predictions" class="space-y-2"></div>
+            <button onclick="document.getElementById('result-overlay').classList.add('hidden')" class="mt-6 w-full py-3 text-xs text-gray-400 uppercase tracking-widest border-t border-white/10 active:text-white">Fechar</button>
+        </div>
+    </div>
+
+    <div class="bg-black p-6 flex justify-center">
+        <button id="btn-snap" onclick="capturarEClassificar()" class="flex items-center bg-[#811803] px-10 py-4 rounded-full text-white font-bold shadow-2xl active:scale-95 transition">
+            <i class="material-icons mr-2">photo_camera</i> <span id="btn-text">CLASSIFICAR</span>
+        </button>
+    </div>
+
+    <script>
+        const video = document.getElementById('video');
+        const categoria = localStorage.getItem('categoria_atual') || "Elementos Arquitetônicos";
+        document.getElementById('categoria-label').innerText = categoria;
+
+        async function initCamera() {
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ 
+                    video: { facingMode: "environment" }, 
+                    audio: false 
+                });
+                video.srcObject = stream;
+            } catch (err) {
+                alert("Erro ao acessar câmera: " + err);
+            }
+        }
+
+        async function capturarEClassificar() {
+            const btnText = document.getElementById('btn-text');
+            const canvas = document.getElementById('canvas');
+            const context = canvas.getContext('2d');
+            
+            // Garantir que o userId seja enviado como número para o FastAPI
+            const rawUserId = localStorage.getItem('user_id');
+            if (!rawUserId) {
+                alert("Sessão expirada. Por favor, faça login novamente.");
+                window.location.href = 'login.html';
+                return;
+            }
+            const userId = parseInt(rawUserId);
+
+            btnText.innerText = "PROCESSANDO...";
+            
+            // Redimensionar para 300x300 no frontend já ajuda muito na performance
+            // sem perder a qualidade necessária para a IA (que usa 96x96)
+            canvas.width = 300;
+            canvas.height = 300;
+            context.drawImage(video, 0, 0, 300, 300);
+
+            canvas.toBlob(async (blob) => {
+                const formData = new FormData();
+                formData.append('file', blob, 'foto.jpg');
+                formData.append('categoria', categoria);
+                formData.append('user_id', userId); 
+
+                if ("geolocation" in navigator) {
+                    navigator.geolocation.getCurrentPosition(
+                        (pos) => {
+                            formData.append('latitude', pos.coords.latitude);
+                            formData.append('longitude', pos.coords.longitude);
+                            enviarParaBackend(formData);
+                        },
+                        () => {
+                            console.warn("GPS indisponível.");
+                            enviarParaBackend(formData);
+                        },
+                        { timeout: 4000 }
+                    );
+                } else {
+                    enviarParaBackend(formData);
+                }
+            }, 'image/jpeg', 0.8); // 0.8 de qualidade economiza banda
+        }
+
+        async function enviarParaBackend(formData) {
+            const btnText = document.getElementById('btn-text');
+            try {
+                const response = await fetch('http://127.0.0.1:8000/classify', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                if (!response.ok) {
+                    const erroData = await response.json();
+                    // Captura erros de validação (como o 422) e mostra o campo culpado
+                    const msg = erroData.detail && typeof erroData.detail === 'object' 
+                        ? JSON.stringify(erroData.detail) 
+                        : erroData.detail;
+                    throw new Error(msg || "Erro no servidor");
+                }
+
+                const result = await response.json();
+                exibirResultados(result);
+            } catch (err) {
+                console.error(err);
+                alert("Erro: " + err.message);
+            } finally {
+                btnText.innerText = "CLASSIFICAR";
+            }
+        }
+
+        function exibirResultados(result) {
+            const overlay = document.getElementById('result-overlay');
+            const container = document.getElementById('predictions');
+            overlay.classList.remove('hidden');
+            
+            const porcentagem = (result.confianca_modelo * 100).toFixed(2);
+            
+            container.innerHTML = `
+                <div class="text-center mb-4">
+                    <span class="text-[10px] text-gray-500 uppercase tracking-[0.2em] font-bold">Inteligência Artificial</span>
+                </div>
+                <div class="flex justify-between items-end mb-1">
+                    <span class="text-xl font-black text-emerald-400 uppercase leading-none">${result.elemento}</span>
+                    <span class="text-sm font-mono text-gray-400">${porcentagem}%</span>
+                </div>
+                <div class="w-full bg-white/5 h-1.5 rounded-full overflow-hidden">
+                    <div class="bg-emerald-500 h-full transition-all duration-1000" style="width: ${porcentagem}%"></div>
+                </div>
+                <div class="mt-4 pt-4 border-t border-white/5 flex justify-between items-center">
+                    <span class="text-[9px] text-gray-600 uppercase">Localização: Ouro Preto</span>
+                    <span class="text-[9px] text-gray-600">${new Date().toLocaleTimeString('pt-BR')}</span>
+                </div>
+            `;
+        }
+
+        initCamera();
+    </script>
+</body>
+</html>

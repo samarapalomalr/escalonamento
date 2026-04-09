@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - IA Patrimônio</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
+</head>
+<body class="bg-gray-50 min-h-screen flex items-center justify-center p-6">
+
+    <div class="w-full max-w-sm text-center">
+        <h1 class="text-3xl font-bold text-gray-800 mb-8 tracking-tight">IA Patrimônio</h1>
+
+        <div class="space-y-4 bg-white p-8 rounded-3xl shadow-xl border border-gray-100">
+            <div>
+                <input type="text" id="usuario" placeholder="Usuário" 
+                    class="w-full p-4 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-red-800 transition">
+            </div>
+            <div>
+                <input type="password" id="senha" placeholder="Senha" 
+                    class="w-full p-4 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-red-800 transition">
+            </div>
+
+            <button onclick="fazerLogin()" id="btn-entrar" 
+                class="w-full bg-[#811803] text-white font-bold p-4 rounded-xl shadow-lg hover:bg-red-900 transition active:scale-95">
+                ENTRAR
+            </button>
+
+            <div class="pt-2">
+                <button onclick="location.href='registro.html'" class="text-sm text-gray-500 font-medium hover:underline">
+                    Criar conta
+                </button>
+            </div>
+
+            <div class="relative py-4">
+                <div class="absolute inset-0 flex items-center"><div class="w-full border-t border-gray-200"></div></div>
+                <div class="relative flex justify-center text-xs uppercase"><span class="bg-white px-2 text-gray-400">Ou</span></div>
+            </div>
+
+            <button class="w-full flex items-center justify-center border border-gray-300 p-3 rounded-xl hover:bg-gray-50 transition">
+                <img src="https://www.gstatic.com/images/branding/product/1x/gsa_512dp.png" class="w-5 h-5 mr-3">
+                <span class="text-sm font-semibold text-gray-600">Entrar com Google</span>
+            </button>
+        </div>
+    </div>
+
+    <script>
+        async function fazerLogin() {
+            const user = document.getElementById('usuario').value;
+            const pass = document.getElementById('senha').value;
+            const btn = document.getElementById('btn-entrar');
+
+            if(!user || !pass) return alert("Preencha todos os campos");
+
+            btn.innerText = "CARREGANDO...";
+            
+            // Ajustado para o formato OAuth2PasswordRequestForm do seu main.py
+            const formData = new URLSearchParams();
+            formData.append('username', user);
+            formData.append('password', pass);
+
+            try {
+                // Rota alterada para /login conforme seu Python
+                const response = await fetch('http://127.0.0.1:8000/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                    body: formData
+                });
+
+                if(response.ok) {
+                    const data = await response.json();
+                    localStorage.setItem('usuario', user);
+                    localStorage.setItem('token', data.access_token);
+                    
+                    // Nota: Se seu login retornar o ID do usuário, salve aqui. 
+                    // Caso contrário, usaremos um valor padrão no histórico por enquanto.
+                    localStorage.setItem('user_id', data.user_id || 1); 
+                    
+                    location.href = 'home.html';
+                } else {
+                    alert("Usuário ou senha incorretos");
+                }
+            } catch (err) {
+                alert("Erro ao conectar com o servidor. Verifique se o backend está rodando.");
+            } finally {
+                btn.innerText = "ENTRAR";
+            }
+        }
+    </script>
+</body>
+</html>

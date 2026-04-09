@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Saiba Mais - IA Patrimônio</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
+</head>
+<body class="bg-gray-100 min-h-screen">
+    <header class="bg-[#811803] text-white p-4 shadow-md flex items-center">
+        <button onclick="history.back()" class="mr-4"><i class="material-icons">arrow_back</i></button>
+        <h1 class="text-xl font-bold">Saiba Mais</h1>
+    </header>
+
+    <main id="lista-artigos" class="p-5 max-w-2xl mx-auto space-y-6">
+        </main>
+
+    <script>
+        const artigos = [
+            {
+                id: '1',
+                titulo: "A deep learning approach for cultural heritage building classification...",
+                autores: "André Luiz Carvalho Ottoni, Lara Toledo Cordeiro Ottoni",
+                ano: 2025,
+                tags: ["AI", "Deep Learning", "MobileNet"],
+                resumo: "Este estudo propõe uma abordagem baseada em deep learning para a classificação de componentes arquitetônicos...",
+                link: "https://www.sciencedirect.com/science/article/abs/pii/S1296207425001207"
+            },
+            {
+                id: '2',
+                titulo: "ImageOP: The Image Dataset with Religious Buildings in Ouro Preto...",
+                autores: "André Luiz Carvalho Ottoni, Lara Toledo Cordeiro Ottoni",
+                ano: 2022,
+                tags: ["Dataset", "Ouro Preto", "EfficientNet"],
+                resumo: "Este trabalho apresenta o ImageOP, um dataset desenvolvido para classificação de edifícios religiosos...",
+                link: "https://www.mdpi.com/2571-9408/7/11/302"
+            },
+            {
+                id: '3',
+                titulo: "IA para Classificação de Elementos: Estudo em Raposos/MG",
+                autores: "Samara Paloma Lopes Augusto Ribeiro, André Luiz Carvalho Ottoni",
+                ano: 2025,
+                tags: ["Patrimônio", "Inventário", "Raposos"],
+                resumo: "Este trabalho investiga o uso de inteligência artificial para a classificação automática de elementos arquitetônicos...",
+                link: "#"
+            }
+        ];
+
+        function renderArtigos() {
+            const container = document.getElementById('lista-artigos');
+            container.innerHTML = artigos.map(art => `
+                <div class="bg-white rounded-2xl shadow-md p-5 border-l-8 border-[#811803]">
+                    <div class="flex justify-between items-start">
+                        <h2 class="text-lg font-bold leading-tight">${art.titulo}</h2>
+                        <button class="text-red-500"><i class="material-icons">favorite_border</i></button>
+                    </div>
+                    <p class="text-sm italic text-gray-600 my-2">${art.autores}</p>
+                    <p class="text-xs text-gray-400">Ano: ${art.ano}</p>
+                    
+                    <div class="flex flex-wrap gap-2 my-3">
+                        ${art.tags.map(tag => `<span class="bg-orange-100 text-orange-800 text-[10px] px-2 py-1 rounded-full font-bold">${tag}</span>`).join('')}
+                    </div>
+
+                    <h4 class="font-bold text-sm mt-4">Resumo</h4>
+                    <p id="resumo-${art.id}" class="text-sm text-gray-700 text-justify line-clamp-3 transition-all">
+                        ${art.resumo}
+                    </p>
+                    <button onclick="toggleResumo('${art.id}')" class="text-blue-600 text-xs font-bold mt-2">VER MAIS</button>
+
+                    <div class="flex justify-end mt-4 space-x-4 border-t pt-3">
+                        <button onclick="navigator.clipboard.writeText('${art.resumo}')" class="text-gray-500"><i class="material-icons">content_copy</i></button>
+                        <a href="${art.link}" target="_blank" class="flex items-center text-[#811803] font-bold text-sm">
+                            <i class="material-icons text-sm mr-1">open_in_new</i> ABRIR ARTIGO
+                        </a>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function toggleResumo(id) {
+            const el = document.getElementById(`resumo-${id}`);
+            el.classList.toggle('line-clamp-3');
+        }
+
+        renderArtigos();
+    </script>
+</body>
+</html>
