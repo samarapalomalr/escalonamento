@@ -26,8 +26,14 @@
     </div>
 
     <script>
-        // URL do seu Backend no Render
         const API_BASE_URL = "https://escalonamento.onrender.com";
+
+        // DESPERTAR AUTOMÁTICO AO CARREGAR
+        window.addEventListener('DOMContentLoaded', () => {
+            fetch(`${API_BASE_URL}/docs`, { mode: 'no-cors' })
+                .then(() => console.log("Sinal de wake-up enviado..."))
+                .catch(() => {});
+        });
 
         async function registrar() {
             const user = document.getElementById('novo-usuario').value;
@@ -36,12 +42,10 @@
 
             if(!user || !pass) return alert("Preencha os campos!");
 
-            // Feedback visual de carregamento
             btn.innerText = "CADASTRANDO...";
             btn.disabled = true;
 
             try {
-                // Alterado de localhost para a URL do Render
                 const response = await fetch(`${API_BASE_URL}/register`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
@@ -50,7 +54,6 @@
 
                 if(response.ok) {
                     alert("Usuário criado com sucesso!");
-                    // Garanta que o index.html seja a sua tela de login
                     location.href = 'index.html'; 
                 } else {
                     const error = await response.json();
@@ -58,7 +61,7 @@
                 }
             } catch (err) {
                 console.error(err);
-                alert("Erro ao conectar com o servidor. O backend pode estar iniciando, tente novamente em alguns segundos.");
+                alert("O servidor está acordando. Aguarde 30 segundos e tente cadastrar novamente.");
             } finally {
                 btn.innerText = "CADASTRAR";
                 btn.disabled = false;
