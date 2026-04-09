@@ -8,20 +8,18 @@ from sqlalchemy.orm import Session
 from datetime import datetime
 from typing import List
 
-# Importação robusta para local e deploy
-try:
-    from . import models, schemas, database, auth
-    from .services import ai_service
-except (ImportError, ValueError):
-    import models, schemas, database, auth
-    from services import ai_service
+# Imports simplificados para a estrutura backend/app/
+import models
+import schemas
+import database
+import auth
+from services import ai_service
 
 # Inicializa o banco de dados
 models.Base.metadata.create_all(bind=database.engine)
 
 app = FastAPI(title="Patrimônio IA API")
 
-# Configuração de CORS para permitir acesso da Vercel
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"], 
@@ -30,14 +28,11 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Servir arquivos estáticos (fotos de exemplo)
-# O path.abspath garante que ele ache a pasta independente de onde o servidor rode
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+# Caminho para assets (sobe um nível de 'app' para 'backend')
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 assets_path = os.path.join(BASE_DIR, "assets")
 if os.path.exists(assets_path):
     app.mount("/assets", StaticFiles(directory=assets_path), name="assets")
-
-# --- ROTAS ---
 
 @app.post("/register", response_model=schemas.UserResponse)
 def register(user: schemas.UserCreate, db: Session = Depends(database.get_db)):
@@ -60,11 +55,9 @@ def login(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depend
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Usuário ou senha incorretos",
-            headers={"WWW-Authenticate": "Bearer"},
         )
     
     access_token = auth.create_access_token(data={"sub": user.username})
-    
     return {
         "access_token": access_token, 
         "token_type": "bearer",
@@ -99,16 +92,9 @@ async def classify_and_save(
         db.commit()
         db.refresh(nova_deteccao)
         return nova_deteccao
-
     except Exception as e:
-        print(f"Erro na classificação: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 @app.get("/history/{user_id}", response_model=List[schemas.DeteccaoResponse])
 def get_history(user_id: int, db: Session = Depends(database.get_db)):
     return db.query(models.Deteccao).filter(models.Deteccao.user_id == user_id).order_by(models.Deteccao.data.desc()).all()
-
-if __name__ == "__main__":
-    port = int(os.environ.get("PORT", 8000))
-    # Para rodar local: uvicorn main:app --reload
-    uvicorn.run(app, host="0.0.0.0", port=port)
