@@ -3,119 +3,112 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login - IA Patrimônio</title>
+    <title>Debug Login - IA Patrimônio</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
 </head>
-<body class="bg-gray-50 min-h-screen flex items-center justify-center p-6">
+<body class="bg-gray-100 min-h-screen flex flex-col items-center justify-center p-4">
 
-    <div class="w-full max-w-sm text-center">
-        <h1 class="text-3xl font-bold text-gray-800 mb-8 tracking-tight">IA Patrimônio</h1>
-
-        <div class="space-y-4 bg-white p-8 rounded-3xl shadow-xl border border-gray-100">
-            <div>
-                <input type="text" id="usuario" placeholder="Usuário" 
-                    class="w-full p-4 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-red-800 transition">
-            </div>
-            <div>
-                <input type="password" id="senha" placeholder="Senha" 
-                    class="w-full p-4 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-red-800 transition">
-            </div>
-
-            <button onclick="fazerLogin()" id="btn-entrar" 
-                class="w-full bg-[#811803] text-white font-bold p-4 rounded-xl shadow-lg hover:bg-red-900 transition active:scale-95 disabled:bg-gray-400">
-                ENTRAR
-            </button>
-
-            <div class="pt-2">
-                <button onclick="location.href='registro.html'" class="text-sm text-gray-500 font-medium hover:underline">
-                    Criar conta
-                </button>
-            </div>
-
-            <div class="relative py-4">
-                <div class="absolute inset-0 flex items-center"><div class="w-full border-t border-gray-200"></div></div>
-                <div class="relative flex justify-center text-xs uppercase"><span class="bg-white px-2 text-gray-400">Ou</span></div>
-            </div>
-
-            <button class="w-full flex items-center justify-center border border-gray-300 p-3 rounded-xl hover:bg-gray-50 transition">
-                <img src="https://www.gstatic.com/images/branding/product/1x/gsa_512dp.png" class="w-5 h-5 mr-3">
-                <span class="text-sm font-semibold text-gray-600">Entrar com Google</span>
+    <div class="w-full max-w-sm bg-white p-8 rounded-3xl shadow-2xl border border-gray-200">
+        <h1 class="text-2xl font-bold text-center text-gray-800 mb-6">IA Patrimônio</h1>
+        
+        <div class="space-y-4">
+            <input type="text" id="usuario" placeholder="Usuário" class="w-full p-4 bg-gray-50 border rounded-xl outline-none focus:ring-2 focus:ring-red-800">
+            <input type="password" id="senha" placeholder="Senha" class="w-full p-4 bg-gray-50 border rounded-xl outline-none focus:ring-2 focus:ring-red-800">
+            
+            <button onclick="fazerLogin()" id="btn-entrar" class="w-full bg-[#811803] text-white font-bold p-4 rounded-xl hover:bg-red-900 transition disabled:opacity-50">
+                ENTRAR NO SISTEMA
             </button>
         </div>
-        <p id="loading-msg" class="hidden text-xs text-amber-700 mt-4 animate-pulse italic">
-            Acordando o servidor no Render... Por favor, aguarde cerca de 50s.
-        </p>
+
+        <div class="mt-6 p-3 bg-black rounded-lg font-mono text-[10px] text-green-400 overflow-hidden">
+            <p class="uppercase font-bold border-b border-green-900 mb-1 text-white">Debug Console:</p>
+            <div id="debug-log" class="h-24 overflow-y-auto">
+                > Aguardando ação...
+            </div>
+        </div>
     </div>
 
     <script>
         const API_BASE_URL = "https://escalonamento.onrender.com";
 
-        // ESTRATÉGIA: ACORDAR ASSIM QUE ABRIR O LOGIN
-        window.addEventListener('DOMContentLoaded', () => {
-            fetch(`${API_BASE_URL}/docs`, { mode: 'no-cors' })
-                .then(() => console.log("Sinal de wake-up enviado ao backend..."))
-                .catch(() => {});
-        });
+        function log(msg) {
+            const container = document.getElementById('debug-log');
+            const time = new Date().toLocaleTimeString().split(' ')[0];
+            container.innerHTML += `<p><span class="text-gray-500">[${time}]</span> ${msg}</p>`;
+            container.scrollTop = container.scrollHeight;
+        }
 
         async function fazerLogin() {
             const user = document.getElementById('usuario').value;
             const pass = document.getElementById('senha').value;
             const btn = document.getElementById('btn-entrar');
-            const msg = document.getElementById('loading-msg');
 
-            if(!user || !pass) return alert("Preencha todos os campos");
+            if(!user || !pass) return alert("Preencha os campos!");
 
             btn.disabled = true;
-            msg.classList.remove('hidden'); 
-            
+            log("Iniciando processo de login...");
+            log(`Destino: ${API_BASE_URL}/login`);
+
             const formData = new URLSearchParams();
             formData.append('username', user);
             formData.append('password', pass);
 
-            // Função que gerencia as tentativas de conexão
-            const tentarConectar = async (tentativasRestantes) => {
+            // TENTATIVA RECURSIVA COM TIMEOUT MANUAL
+            const tentar = async (n) => {
+                if (n <= 0) {
+                    log("<span class='text-red-500'>ERRO: Esgotadas as tentativas.</span>");
+                    btn.disabled = false;
+                    return;
+                }
+
+                log(`Tentativa #${6-n} de 5...`);
+                
+                // Usamos o AbortController para não deixar a requisição pendurada
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 15000); // 15s de timeout
+
                 try {
-                    btn.innerText = tentativasRestantes < 5 ? `LIGANDO (${tentativasRestantes})...` : "AUTENTICANDO...";
-                    
                     const response = await fetch(`${API_BASE_URL}/login`, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-                        body: formData
+                        body: formData,
+                        signal: controller.signal
                     });
 
-                    if(response.ok) {
+                    clearTimeout(timeoutId);
+
+                    if (response.ok) {
+                        log("<span class='text-blue-400'>Sucesso! Redirecionando...</span>");
                         const data = await response.json();
-                        localStorage.setItem('usuario', data.username);
+                        localStorage.setItem('user_id', data.user_id);
                         localStorage.setItem('token', data.access_token);
-                        localStorage.setItem('user_id', data.user_id); 
-                        location.href = 'home.html';
+                        setTimeout(() => location.href = 'home.html', 1000);
                     } else {
-                        const errorMsg = await response.json();
-                        alert(errorMsg.detail || "Usuário ou senha incorretos");
-                        resetarBotao();
+                        const errData = await response.json();
+                        log(`<span class='text-yellow-500'>Falha: ${errData.detail || response.status}</span>`);
+                        btn.disabled = false;
                     }
                 } catch (err) {
-                    if (tentativasRestantes > 0) {
-                        console.log(`Servidor ainda subindo... Tentando novamente. Restam ${tentativasRestantes}`);
-                        // Aguarda 6 segundos entre as tentativas para dar tempo ao Render
-                        setTimeout(() => tentarConectar(tentativasRestantes - 1), 6000);
+                    if (err.name === 'AbortError') {
+                        log("Status: Timeout (Servidor não respondeu)");
                     } else {
-                        alert("O servidor está demorando mais que o esperado. Clique em ENTRAR novamente em instantes.");
-                        resetarBotao();
+                        log(`Status: ${err.message}`);
                     }
+                    log("Aguardando 5s para re-tentar...");
+                    setTimeout(() => tentar(n - 1), 5000);
                 }
             };
 
-            const resetarBotao = () => {
-                btn.innerText = "ENTRAR";
-                btn.disabled = false;
-                msg.classList.add('hidden');
-            };
-
-            // Inicia o ciclo de 5 tentativas
-            tentarConectar(5);
+            tentar(5);
         }
+
+        // Teste de conexão imediato
+        window.onload = () => {
+            log("Testando comunicação com Render...");
+            fetch(`${API_BASE_URL}/docs`, { mode: 'no-cors' })
+                .then(() => log("Sinal enviado. Render acordando."))
+                .catch(e => log("Erro ao acordar Render."));
+        };
     </script>
 </body>
 </html>
